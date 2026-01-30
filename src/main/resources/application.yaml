@@ -1,0 +1,43 @@
+server:
+  port: 8765
+spring:
+  application:
+    name: mc-integration
+
+#  cloud:
+#    aws:
+#      s3:
+#        bucket: image-bucket
+#      credentials:
+#        access-key: "ACCESS_KEY"
+#        secret-key: "SECRET_KEY"
+#      region:
+#        static: ru-central1
+#      endpoint: "https://storage.yandexcloud.net"
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: NONE
+
+hh:
+  api:
+    base-url: https://api.hh.ru
+    #location-endpoint: /areas
+logging:
+  level:
+    your.feign.client.package: DEBUG
+
+app:
+  cache:
+    cache-names:
+      - hh-countries
+      - hh-cities
+    caches:
+      hh-countries:
+        expiry: 2h
+      hh-cities:
+        expiry: 2h
