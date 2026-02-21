@@ -10,5 +10,5 @@ import ru.skillbox.socialnetwork.integration.dto.CityDto;
 public interface CityMapper {
     @Mapping(target = "title", source = "name")
     @Mapping(target = "countryId", source = "parentId")
-    CityDto hhApiToCityDto(AreaModel areaModel);
+    CityDto areaToCityDto(AreaModel areaModel);
 }

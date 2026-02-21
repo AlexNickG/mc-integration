@@ -4,16 +4,16 @@ spring:
   application:
     name: mc-integration
 
-#  cloud:
-#    aws:
-#      s3:
-#        bucket: image-bucket
-#      credentials:
-#        access-key: "ACCESS_KEY"
-#        secret-key: "SECRET_KEY"
-#      region:
-#        static: ru-central1
-#      endpoint: "https://storage.yandexcloud.net"
+  cloud:
+    aws:
+      s3:
+        bucket: user-images-for-social-net
+      credentials:
+        access-key: ${ACCESS_KEY}
+        secret-key: ${SECRET_KEY}
+      region:
+        static: ru-central1
+      endpoint: "https://storage.yandexcloud.net"
 
 feign:
   client:
@@ -41,3 +41,19 @@ app:
         expiry: 2h
       hh-cities:
         expiry: 2h
+  jwt:
+    secret: "${JWT_SECRET}"
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_HOST:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+    enabled: true
+
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${random.value}
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30

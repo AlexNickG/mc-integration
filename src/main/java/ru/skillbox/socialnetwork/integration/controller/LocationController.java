@@ -2,14 +2,13 @@ package ru.skillbox.socialnetwork.integration.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.skillbox.socialnetwork.integration.dto.CityDto;
+import ru.skillbox.socialnetwork.integration.dto.CityListDto;
 import ru.skillbox.socialnetwork.integration.dto.CountryDto;
 import ru.skillbox.socialnetwork.integration.service.LocationService;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -21,7 +20,6 @@ public class LocationController {
 
     @GetMapping("/country")
     public ResponseEntity<List<CountryDto>> getAllCountries() {
-
         return ResponseEntity.ok(locationService.getAllCountries());
     }
 

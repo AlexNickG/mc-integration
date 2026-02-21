@@ -14,16 +14,15 @@ public class StorageController {
     private final StorageService storageService;
 
     @PostMapping("/storageUserImage")
-    //@PreAuthorize("hasRole('USER') or hasRole('MANAGER') or hasRole('ADMIN')")
     public ResponseEntity<String> storageUserImage(@RequestPart MultipartFile file) {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().body("File is empty");
         }
         return ResponseEntity.ok(storageService.saveUserImage(file));
     }
-    @GetMapping("/deleteByLink/{url}")
-    public ResponseEntity<Void> deleteByLink(@PathVariable String url) {
-        storageService.deleteUserImage(url);
+    @GetMapping("/deleteByLink")
+    public ResponseEntity<Void> deleteByLink(@RequestParam("linkToDelete") String linkToDelete) {
+        storageService.deleteUserImage(linkToDelete);
         return ResponseEntity.noContent().build();
     }
 }

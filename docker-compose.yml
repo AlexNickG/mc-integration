@@ -1,0 +1,18 @@
+services:
+  eureka:
+    image: eureka-server
+    ports:
+    - "8761:8761"
+    networks:
+      - social-network
+  mc-integration:
+    image: mc-integration
+    environment:
+      - ACCESS_KEY=${ACCESS_KEY}
+      - SECRET_KEY=${SECRET_KEY}
+    depends_on:
+      - eureka
+    networks:
+      - social-network
+networks:
+  social-network:
