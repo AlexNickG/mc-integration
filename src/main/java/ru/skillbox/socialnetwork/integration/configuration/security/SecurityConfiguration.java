@@ -18,11 +18,12 @@ public class SecurityConfiguration {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/storage/**").authenticated()
-                        .requestMatchers("/api/v1/geo/country/**").authenticated()
-                        .anyRequest().authenticated()
-                )
-                .oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults()));
+                        .requestMatchers("/api/v1/storage/**").permitAll()
+                        .requestMatchers("/api/v1/geo/country/**").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
+                        .anyRequest().permitAll()
+                );
+                //.oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults()));
         return http.build();
     }
 }

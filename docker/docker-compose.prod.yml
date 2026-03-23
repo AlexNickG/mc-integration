@@ -1,0 +1,21 @@
+version: '3.9'
+
+services:
+  mc-integration:
+    image: mc-integration:latest
+    container_name: mc-integration
+    restart: unless-stopped
+    ports:
+      - "8765:8765"
+    environment:
+      ACCESS_KEY: ${ACCESS_KEY}
+      SECRET_KEY: ${SECRET_KEY}
+      REDIS_PASS: ${REDIS_PASS}
+      EUREKA_HOST: http://eureka-server:8761/eureka
+      SPRING_DATA_REDIS_HOST: redis
+    networks:
+      - social-network
+
+networks:
+  social-network:
+    external: true

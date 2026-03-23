@@ -3,6 +3,13 @@ server:
 spring:
   application:
     name: mc-integration
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: 6379
+      username: default
+      password: ${REDIS_PASS}
+      client-type: lettuce
 
   cloud:
     aws:
@@ -30,9 +37,13 @@ hh:
 logging:
   level:
     your.feign.client.package: DEBUG
+    org.springframework.security: DEBUG
 
 app:
+  redis:
+    enable: true
   cache:
+    cacheType: redis
     cache-names:
       - hh-countries
       - hh-cities

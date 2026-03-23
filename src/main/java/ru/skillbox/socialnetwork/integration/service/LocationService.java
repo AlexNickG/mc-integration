@@ -1,11 +1,12 @@
 package ru.skillbox.socialnetwork.integration.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import ru.skillbox.socialnetwork.integration.api.model.AreaModel;
+import ru.skillbox.socialnetwork.integration.configuration.properties.AppCacheProperties;
 import ru.skillbox.socialnetwork.integration.dto.CityDto;
-import ru.skillbox.socialnetwork.integration.dto.CityListDto;
 import ru.skillbox.socialnetwork.integration.dto.CountryDto;
 import ru.skillbox.socialnetwork.integration.api.model.CountryModel;
 import ru.skillbox.socialnetwork.integration.api.HhApiClient;
@@ -16,12 +17,13 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @Service
+@CacheConfig(cacheManager = "redisCacheManager")
 public class LocationService {
 
     private final HhApiClient apiClient;
     private final CityMapper cityMapper;
 
-    @Cacheable("hh-countries")
+    @Cacheable(AppCacheProperties.CacheNames.HH_COUNTRIES)
     public List<CountryDto> getAllCountries() {
         List<CountryDto> countryDtoList = new ArrayList<>();
         List<CountryModel> allCountries = apiClient.getAllCountries();
@@ -36,20 +38,7 @@ public class LocationService {
         return countryDtoList;
     }
 
-    @Cacheable("hh-cities")
-    public CityListDto getAllCitiesForCountry1(Integer countryId) {
-        List<CityDto> allCitiesForCountry = new ArrayList<>();
-        AreaModel areaModel = apiClient.getCountryArea(countryId);
-        List<AreaModel> areaModelList = areaModel.getAreas();//TODO: add NULL check
-        for(AreaModel subAreaModel: areaModelList) {
-           parseAreas(subAreaModel, countryId, allCitiesForCountry);
-        }
-        CityListDto response = new CityListDto();
-        response.setCityDtoList(allCitiesForCountry);
-        return response;
-    }
-
-    @Cacheable("hh-cities")
+    @Cacheable(AppCacheProperties.CacheNames.HH_CITIES)
     public List<CityDto> getAllCitiesForCountry(Integer countryId) {
         List<CityDto> allCitiesForCountry = new ArrayList<>();
         AreaModel areaModel = apiClient.getCountryArea(countryId);
@@ -57,7 +46,6 @@ public class LocationService {
         for(AreaModel subAreaModel: areaModelList) {
             parseAreas(subAreaModel, countryId, allCitiesForCountry);
         }
-
         return allCitiesForCountry;
     }
 
