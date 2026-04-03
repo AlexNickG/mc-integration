@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import ru.skillbox.socialnetwork.integration.dto.StorageDto;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
@@ -30,7 +31,8 @@ public class StorageService {
         DeleteObjectResponse response = s3Client.deleteObject(deleteObjectRequest);
     }
 
-    public String saveUserImage(MultipartFile file) {
+    public StorageDto saveUserImage(MultipartFile file) {
+        StorageDto storageDto = new StorageDto();
         String fileName = file.getOriginalFilename();
 
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
@@ -42,9 +44,12 @@ public class StorageService {
             PutObjectResponse response = s3Client.putObject(putObjectRequest,
                     RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
         } catch (IOException e) {
+            System.out.println("IOException" + e.fillInStackTrace());
             throw new RuntimeException(e);
         }
+        storageDto.setFileName(s3Client.utilities().getUrl(b -> b.bucket(bucketName).key(fileName)).toString());
+        //System.out.println(result);
 
-        return s3Client.utilities().getUrl(b -> b.bucket(bucketName).key(fileName)).toString();
+        return storageDto;
     }
 }

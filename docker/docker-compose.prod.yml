@@ -15,6 +15,10 @@ services:
       SPRING_DATA_REDIS_HOST: redis
     networks:
       - social-network
+    volumes:
+      #- /opt/secrets/private.pem:/app/keys/private.pem:ro
+      - ./keys/public.pem:/app/keys/public.pem
+
 
 networks:
   social-network:

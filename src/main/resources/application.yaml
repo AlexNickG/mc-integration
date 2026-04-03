@@ -21,6 +21,14 @@ spring:
       region:
         static: ru-central1
       endpoint: "https://storage.yandexcloud.net"
+    gateway:
+      routes:
+        - id: integration-actuator
+          uri: http://mc-integration:8765
+          predicates:
+            - Path=/actuator/integration/**
+          filters:
+            - RewritePath=/actuator/integration/(?<segment>.*), /actuator/${segment}
 
 feign:
   client:
@@ -49,11 +57,12 @@ app:
       - hh-cities
     caches:
       hh-countries:
-        expiry: 2h
+        expiry: 120h
       hh-cities:
-        expiry: 2h
-  jwt:
-    secret: "${JWT_SECRET}"
+        expiry: 120h
+
+jwt:
+  public-key-path: ${JWT_PUBLIC_KEY_PATH:/app/keys/public.pem}
 
 eureka:
   client:
@@ -68,3 +77,4 @@ eureka:
     instance-id: ${spring.application.name}:${random.value}
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 30
+
