@@ -13,11 +13,12 @@ services:
       REDIS_PASS: ${REDIS_PASS}
       EUREKA_HOST: http://eureka-server:8761/eureka
       SPRING_DATA_REDIS_HOST: redis
+      JWT_PUBLIC_KEY_PATH: file:/app/keys/public.pem
     networks:
       - social-network
     volumes:
-      #- /opt/secrets/private.pem:/app/keys/private.pem:ro
-      - ./keys/public.pem:/app/keys/public.pem
+      - /opt/secrets/public.pem:/app/keys/public.pem:ro
+      #- ./keys/public.pem:/app/keys/public.pem
 
 
 networks:

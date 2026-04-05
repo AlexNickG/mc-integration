@@ -3,11 +3,16 @@ server:
 spring:
   application:
     name: mc-integration
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          public-key-location: ${JWT_PUBLIC_KEY_PATH:classpath:/keys/public.pem}
   data:
     redis:
       host: ${SPRING_DATA_REDIS_HOST:localhost}
       port: 6379
-      username: default
+      #username: default
       password: ${REDIS_PASS}
       client-type: lettuce
 
@@ -60,9 +65,11 @@ app:
         expiry: 120h
       hh-cities:
         expiry: 120h
+  jwt:
+    secret: "${JWT_SECRET}"
 
-jwt:
-  public-key-path: ${JWT_PUBLIC_KEY_PATH:/app/keys/public.pem}
+#jwt:
+#  public-key-path: ${JWT_PUBLIC_KEY_PATH:src/main/resources/keys/public.pem}
 
 eureka:
   client:

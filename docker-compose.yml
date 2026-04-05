@@ -5,27 +5,27 @@ services:
     - "8761:8761"
     networks:
       - frontend-network
-  mc-integration:
-    image: mc-integration:latest
-    container_name: mc-integration
-    restart: unless-stopped
-    ports:
-      - "8765:8765"
-    environment:
-      - ACCESS_KEY=${ACCESS_KEY}
-      - SECRET_KEY=${SECRET_KEY}
-      - REDIS_PASS=${REDIS_PASS}
-      - EUREKA_HOST=http://eureka:8761/eureka
-      - REDIS_HOST=redis
-    depends_on:
-      - eureka
-    networks:
-      - frontend-network
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "с" ]
-      interval: 15s
-      timeout: 5s
-      retries: 5
+#  mc-integration:
+#    image: mc-integration:latest
+#    container_name: mc-integration
+#    restart: unless-stopped
+#    ports:
+#      - "8765:8765"
+#    environment:
+#      - ACCESS_KEY=${ACCESS_KEY}
+#      - SECRET_KEY=${SECRET_KEY}
+#      - REDIS_PASS=${REDIS_PASS}
+#      - EUREKA_HOST=http://eureka:8761/eureka
+#      - REDIS_HOST=redis
+#    depends_on:
+#      - eureka
+#    networks:
+#      - frontend-network
+#    healthcheck:
+#      test: [ "CMD", "curl", "-f", "с" ]
+#      interval: 15s
+#      timeout: 5s
+#      retries: 5
   redis:
     image: redis:8.6.0
     command: redis-server --requirepass "${REDIS_PASS}"

@@ -32,7 +32,7 @@ public class LocationService {
             Integer countryId = Integer.valueOf(country.getId());
             countryDto.setId(countryId);
             countryDto.setTitle(country.getName());
-            countryDto.setCities(getAllCitiesForCountry(countryId));
+            //countryDto.setCities(getAllCitiesForCountry(countryId));
             countryDtoList.add(countryDto);
         }
         return countryDtoList;
@@ -40,7 +40,7 @@ public class LocationService {
 
     @Cacheable(AppCacheProperties.CacheNames.HH_CITIES)
     public List<CityDto> getAllCitiesForCountry(Integer countryId) {
-        List<CityDto> allCitiesForCountry = new ArrayList<>();
+        List<CityDto> allCitiesForCountry = new ArrayList<>();//TODO: make variable global?
         AreaModel areaModel = apiClient.getCountryArea(countryId);
         List<AreaModel> areaModelList = areaModel.getAreas();//TODO: add NULL check
         for(AreaModel subAreaModel: areaModelList) {
