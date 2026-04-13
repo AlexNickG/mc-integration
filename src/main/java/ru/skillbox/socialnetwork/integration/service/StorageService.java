@@ -1,20 +1,22 @@
 package ru.skillbox.socialnetwork.integration.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import ru.skillbox.socialnetwork.integration.dto.StorageDto;
+import ru.skillbox.socialnetwork.integration.exception.S3UploadException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
-import software.amazon.awssdk.services.s3.model.DeleteObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 import java.io.IOException;
+import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class StorageService {
@@ -26,14 +28,19 @@ public class StorageService {
 
     public void deleteUserImage(String url) {
         String fileName = StringUtils.getFilename(url);
-
-        DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder().bucket(bucketName).key(fileName).build();
-        DeleteObjectResponse response = s3Client.deleteObject(deleteObjectRequest);
+        log.info("Deleting file from S3: {}", fileName);
+        DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+                .bucket(bucketName)
+                .key(fileName)
+                .build();
+        s3Client.deleteObject(deleteObjectRequest);
     }
 
     public StorageDto saveUserImage(MultipartFile file) {
-        StorageDto storageDto = new StorageDto();
-        String fileName = file.getOriginalFilename();
+        String extension = StringUtils.getFilenameExtension(file.getOriginalFilename());
+        String fileName = UUID.randomUUID() + (extension != null ? "." + extension : "");
+
+        log.info("Uploading file to S3: {}", fileName);
 
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
@@ -41,15 +48,16 @@ public class StorageService {
                 .build();
 
         try {
-            PutObjectResponse response = s3Client.putObject(putObjectRequest,
+            s3Client.putObject(putObjectRequest,
                     RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
         } catch (IOException e) {
-            System.out.println("IOException" + e.fillInStackTrace());
-            throw new RuntimeException(e);
+            log.error("Failed to upload file to S3: {}", fileName, e);
+            throw new S3UploadException(fileName, e);
         }
-        storageDto.setFileName(s3Client.utilities().getUrl(b -> b.bucket(bucketName).key(fileName)).toString());
-        //System.out.println(result);
 
+        String fileUrl = s3Client.utilities().getUrl(b -> b.bucket(bucketName).key(fileName)).toString();
+        StorageDto storageDto = new StorageDto();
+        storageDto.setFileName(fileUrl);
         return storageDto;
     }
 }

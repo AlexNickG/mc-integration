@@ -1,8 +1,11 @@
 package ru.skillbox.socialnetwork.integration.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import ru.skillbox.socialnetwork.integration.api.model.AreaModel;
 import ru.skillbox.socialnetwork.integration.configuration.properties.AppCacheProperties;
@@ -15,6 +18,7 @@ import ru.skillbox.socialnetwork.integration.mapper.CityMapper;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 @CacheConfig(cacheManager = "redisCacheManager")
@@ -23,27 +27,37 @@ public class LocationService {
     private final HhApiClient apiClient;
     private final CityMapper cityMapper;
 
+    @Lazy
+    @Autowired
+    private LocationService self;
+
     @Cacheable(AppCacheProperties.CacheNames.HH_COUNTRIES)
     public List<CountryDto> getAllCountries() {
         List<CountryDto> countryDtoList = new ArrayList<>();
         List<CountryModel> allCountries = apiClient.getAllCountries();
-        for (CountryModel country: allCountries) {
-            CountryDto countryDto = new CountryDto();
-            Integer countryId = Integer.valueOf(country.getId());
-            countryDto.setId(countryId);
-            countryDto.setTitle(country.getName());
-            //countryDto.setCities(getAllCitiesForCountry(countryId));
-            countryDtoList.add(countryDto);
+        for (CountryModel country : allCountries) {
+            try {
+                Integer countryId = Integer.valueOf(country.getId());
+                CountryDto countryDto = new CountryDto();
+                countryDto.setId(countryId);
+                countryDto.setTitle(country.getName());
+                countryDto.setCities(self.getAllCitiesForCountry(countryId));
+                countryDtoList.add(countryDto);
+            } catch (NumberFormatException e) {
+                log.warn("Error in external data: '{}'", country.getId());
+            }
         }
         return countryDtoList;
     }
 
     @Cacheable(AppCacheProperties.CacheNames.HH_CITIES)
     public List<CityDto> getAllCitiesForCountry(Integer countryId) {
-        List<CityDto> allCitiesForCountry = new ArrayList<>();//TODO: make variable global?
+        List<CityDto> allCitiesForCountry = new ArrayList<>();
         AreaModel areaModel = apiClient.getCountryArea(countryId);
-        List<AreaModel> areaModelList = areaModel.getAreas();//TODO: add NULL check
-        for(AreaModel subAreaModel: areaModelList) {
+        if (areaModel == null || areaModel.getAreas() == null) {
+            return allCitiesForCountry;
+        }
+        for (AreaModel subAreaModel : areaModel.getAreas()) {
             parseAreas(subAreaModel, countryId, allCitiesForCountry);
         }
         return allCitiesForCountry;
@@ -53,12 +67,17 @@ public class LocationService {
         if (area == null) {
             return;
         }
-        //List<AreaModel> subAreas = area.getAreas();
-        if (area.getAreas().isEmpty() && area.getParentId() != null) {// если регион не имеет подрегионов, то это - город (необязательно! это может быть страна или регион без подрегионов)
-            area.setParentId(String.valueOf(countryId));
-            allCitiesForCountry.add(cityMapper.areaToCityDto(area));
-        } else if (area.getParentId() != null) {// если регион имеет подрегионы, то рекурсивно идем до городов
-            for (AreaModel subArea : area.getAreas()) {
+        List<AreaModel> subAreas = area.getAreas();
+        if (subAreas == null || subAreas.isEmpty()) {
+            // если регион не имеет подрегионов — это город, страна или регион без подрегионов
+            if (area.getParentId() != null) {
+                CityDto cityDto = cityMapper.areaToCityDto(area);
+                cityDto.setCountryId(countryId);
+                allCitiesForCountry.add(cityDto);
+            }
+        } else if (area.getParentId() != null) {
+            // если регион имеет подрегионы — рекурсивно идем до городов
+            for (AreaModel subArea : subAreas) {
                 parseAreas(subArea, countryId, allCitiesForCountry);
             }
         }

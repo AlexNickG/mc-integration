@@ -3,6 +3,7 @@ package ru.skillbox.socialnetwork.integration.api.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -13,5 +14,5 @@ public class AreaModel {
     private Float lng;
     @JsonProperty("parent_id")
     private String parentId;
-    private List<AreaModel> areas;
+    private List<AreaModel> areas = new ArrayList<>();
 }

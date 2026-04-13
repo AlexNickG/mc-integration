@@ -11,6 +11,6 @@ public class CountryDto implements Serializable {
 
     private Integer id;
     private String title;
-    //private List<CityDto> cities;
+    private List<CityDto> cities;
 
 }
