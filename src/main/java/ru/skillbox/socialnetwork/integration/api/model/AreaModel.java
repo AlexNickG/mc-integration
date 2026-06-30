@@ -14,5 +14,5 @@ public class AreaModel {
     private Float lng;
     @JsonProperty("parent_id")
     private String parentId;
-    private List<AreaModel> areas = new ArrayList<>();
+    private List<AreaModel> subAreas = new ArrayList<>();
 }

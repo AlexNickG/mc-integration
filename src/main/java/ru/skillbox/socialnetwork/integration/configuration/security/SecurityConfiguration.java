@@ -1,10 +1,12 @@
 package ru.skillbox.socialnetwork.integration.configuration.security;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
@@ -17,6 +19,7 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@ConditionalOnProperty(name = "app.security.enabled", havingValue = "true",  matchIfMissing = true)
 public class SecurityConfiguration {
 
     @Bean
@@ -32,13 +35,13 @@ public class SecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        //.requestMatchers("/api/v1/storage/**").permitAll()
-                        //.requestMatchers("/api/v1/geo/country/**").permitAll()
                         .requestMatchers("/v3/api-docs/**",
-                        								"/swagger-ui/**",
-                        								"/actuator/health",
-                        								"/actuator/prometheus",
-                        								"/actuator/health/**").permitAll()
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/error",
+                                "/actuator/health",
+                                "/actuator/prometheus",
+                                "/actuator/health/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2

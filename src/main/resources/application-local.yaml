@@ -1,0 +1,73 @@
+server:
+  port: 8765
+spring:
+  application:
+    name: mc-integration
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          public-key-location: ${JWT_PUBLIC_KEY_PATH:classpath:/keys/public.pem}
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: 6379
+      password: ${REDIS_PASS}
+      client-type: lettuce
+
+  cloud:
+    aws:
+      s3:
+        bucket: user-images-for-social-net
+      credentials:
+        access-key: ${YC_S3_ACCESS_KEY}
+        secret-key: ${YC_S3_SECRET_KEY}
+      region:
+        static: ru-central1
+      endpoint: "https://storage.yandexcloud.net"
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: NONE
+
+hh:
+  api:
+    base-url: https://api.hh.ru
+logging:
+  level:
+    #your.feign.client.package: DEBUG
+    org.springframework.security: TRACE
+
+app:
+  security:
+    enabled: false
+  cache:
+    enable: true
+    cacheType: redis
+    cache-names:
+      - hh-countries
+      - hh-cities
+    caches:
+      hh-countries:
+        expiry: 120h
+      hh-cities:
+        expiry: 120h
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_HOST:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+    enabled: true
+
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${random.value}
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+

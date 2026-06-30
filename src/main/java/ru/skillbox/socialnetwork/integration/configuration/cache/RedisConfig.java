@@ -1,4 +1,4 @@
-package ru.skillbox.socialnetwork.integration.configuration;
+package ru.skillbox.socialnetwork.integration.configuration.cache;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.data.redis.autoconfigure.DataRedisProperties;
@@ -10,7 +10,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
-@ConditionalOnProperty(prefix = "app.redis", name = "enable", havingValue = "true")
+@ConditionalOnProperty(prefix = "app.cache", name = "enable", havingValue = "true")
 public class RedisConfig {
 
     @Bean

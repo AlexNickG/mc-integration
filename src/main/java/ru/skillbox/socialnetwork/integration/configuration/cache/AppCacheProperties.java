@@ -1,4 +1,4 @@
-package ru.skillbox.socialnetwork.integration.configuration.properties;
+package ru.skillbox.socialnetwork.integration.configuration.cache;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -29,7 +29,6 @@ public class AppCacheProperties {
     }
 
     public enum CacheType {
-        IN_MEMORY,
         REDIS
     }
 }

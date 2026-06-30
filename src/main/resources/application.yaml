@@ -1,87 +1,10 @@
-server:
-  port: 8765
 spring:
   application:
     name: mc-integration
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          public-key-location: ${JWT_PUBLIC_KEY_PATH:classpath:/keys/public.pem}
-  data:
-    redis:
-      host: ${SPRING_DATA_REDIS_HOST:localhost}
-      port: 6379
-      #username: default
-      password: ${REDIS_PASS}
-      client-type: lettuce
-
-  cloud:
-    aws:
-      s3:
-        bucket: user-images-for-social-net
-      credentials:
-        access-key: ${ACCESS_KEY}
-        secret-key: ${SECRET_KEY}
-      region:
-        static: ru-central1
-      endpoint: "https://storage.yandexcloud.net"
-    gateway:
-      routes:
-        - id: integration-actuator
-          uri: http://mc-integration:8765
-          predicates:
-            - Path=/actuator/integration/**
-          filters:
-            - RewritePath=/actuator/integration/(?<segment>.*), /actuator/${segment}
-
-feign:
-  client:
-    config:
-      default:
-        connectTimeout: 5000
-        readTimeout: 5000
-        loggerLevel: NONE
-
-hh:
-  api:
-    base-url: https://api.hh.ru
-    #location-endpoint: /areas
-logging:
-  level:
-    your.feign.client.package: DEBUG
-    org.springframework.security: DEBUG
-
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
 app:
-  redis:
-    enable: true
-  cache:
-    cacheType: redis
-    cache-names:
-      - hh-countries
-      - hh-cities
-    caches:
-      hh-countries:
-        expiry: 120h
-      hh-cities:
-        expiry: 120h
-  jwt:
-    secret: "${JWT_SECRET}"
-
-#jwt:
-#  public-key-path: ${JWT_PUBLIC_KEY_PATH:src/main/resources/keys/public.pem}
-
-eureka:
-  client:
-    service-url:
-      defaultZone: ${EUREKA_HOST:http://localhost:8761/eureka/}
-    register-with-eureka: true
-    fetch-registry: true
+  security:
     enabled: true
-
-  instance:
-    prefer-ip-address: true
-    instance-id: ${spring.application.name}:${random.value}
-    lease-renewal-interval-in-seconds: 10
-    lease-expiration-duration-in-seconds: 30
-
