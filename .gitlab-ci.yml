@@ -1,4 +1,5 @@
 stages:
+  - quality
   - build
   - deploy
 
@@ -8,6 +9,22 @@ variables:
 cache:
   paths:
     - .m2/repository/
+
+# ---------- QUALITY ----------
+# Требует переменную SONAR_TOKEN (masked/protected) в Settings > CI/CD > Variables проекта.
+
+quality:
+  stage: quality
+  tags:
+    - mc-integration-deploy
+  script:
+    - mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+        -Dsonar.token=$SONAR_TOKEN
+        -Dsonar.qualitygate.wait=true
+  artifacts:
+    paths:
+      - target/site/jacoco/
+    expire_in: 1 week
 
 # ---------- BUILD ----------
 
