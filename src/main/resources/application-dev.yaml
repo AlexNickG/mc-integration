@@ -43,6 +43,8 @@ logging:
     org.springframework.security: TRACE
 
 app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:8088}
   cache:
     enable: true
     cacheType: redis

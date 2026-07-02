@@ -1,5 +1,6 @@
 package ru.skillbox.socialnetwork.integration.configuration.security;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,12 +23,15 @@ import java.util.List;
 @ConditionalOnProperty(name = "app.security.enabled", havingValue = "true",  matchIfMissing = true)
 public class SecurityConfiguration {
 
+    @Value("${app.cors.allowed-origins:http://localhost:8088}")
+    private List<String> allowedOrigins;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) {
         http
                 .cors(cors -> cors.configurationSource(request -> {
                     var corsConfiguration = new CorsConfiguration();
-                    corsConfiguration.setAllowedOrigins(List.of("http://localhost:8088"));
+                    corsConfiguration.setAllowedOrigins(allowedOrigins);
                     corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     corsConfiguration.setAllowedHeaders(List.of("*"));
                     return corsConfiguration;

@@ -41,6 +41,8 @@ logging:
     org.springframework.boot: WARN
 
 app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:8088}
   cache:
     enable: true
     cacheType: redis
