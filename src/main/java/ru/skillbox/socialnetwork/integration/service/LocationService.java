@@ -25,37 +25,23 @@ public class LocationService {
     private final HhApiClient apiClient;
     private final CityMapper cityMapper;
 
-//    @Lazy
-//    @Autowired
-//    private LocationService self;
-
     @Cacheable(AppCacheProperties.CacheNames.HH_COUNTRIES)
     public List<CountryDto> getAllCountries() {
         List<CountryDto> countryDtoList = new ArrayList<>();
         List<CountryModel> allCountries = apiClient.getAllCountries();
         for (CountryModel country : allCountries) {
-            CountryDto countryDto = new CountryDto();
+            int countryId;
             try{
-                countryDto.setId(Integer.parseInt(country.getId()));
+                countryId = Integer.parseInt(country.getId());
             } catch (NumberFormatException e) {
-                log.info(e.getMessage());
-               //throw new IllegalArgumentException("Country ID is invalid");
+                log.warn("Skipping country with invalid ID '{}' received from HH API", country.getId());
+                continue;
             }
+            CountryDto countryDto = new CountryDto();
+            countryDto.setId(countryId);
             countryDto.setTitle(country.getName());
             countryDtoList.add(countryDto);
         }
-//        for (CountryModel country : allCountries) {
-//            try {
-//                Integer countryId = Integer.valueOf(country.getId());
-//                CountryDto countryDto = new CountryDto();
-//                countryDto.setId(countryId);
-//                countryDto.setTitle(country.getName());
-//                countryDto.setCities(self.getAllCitiesForCountry(countryId));
-//                countryDtoList.add(countryDto);
-//            } catch (NumberFormatException e) {
-//                log.warn("Error in external data: '{}'", country.getId());
-//            }
-//        }
         return countryDtoList;
     }
 

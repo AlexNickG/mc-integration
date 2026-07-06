@@ -76,35 +76,35 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void handleExternalServiceException_returnsBadGateway_forMethodArgumentNotValid() {
+    void handleExternalServiceException_returnsBadRequest_forMethodArgumentNotValid() {
         MethodArgumentNotValidException exception = mock(MethodArgumentNotValidException.class);
         when(exception.getMessage()).thenReturn("validation failed");
 
         ResponseEntity<ErrorResponse> response = handler.handleExternalServiceException(exception);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_GATEWAY);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody().getErrorMessage()).isEqualTo("validation failed");
     }
 
     @Test
-    void handleExternalServiceException_returnsBadGateway_forConstraintViolation() {
+    void handleExternalServiceException_returnsBadRequest_forConstraintViolation() {
         ConstraintViolationException exception =
                 new ConstraintViolationException("constraint violated", Collections.emptySet());
 
         ResponseEntity<ErrorResponse> response = handler.handleExternalServiceException(exception);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_GATEWAY);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody().getErrorMessage()).isEqualTo("constraint violated");
     }
 
     @Test
-    void handleExternalServiceException_returnsBadGateway_forMissingServletRequestParameter() {
+    void handleExternalServiceException_returnsBadRequest_forMissingServletRequestParameter() {
         MissingServletRequestParameterException exception =
                 new MissingServletRequestParameterException("linkToDelete", "String");
 
         ResponseEntity<ErrorResponse> response = handler.handleExternalServiceException(exception);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_GATEWAY);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody().getErrorMessage()).isEqualTo(exception.getMessage());
     }
 

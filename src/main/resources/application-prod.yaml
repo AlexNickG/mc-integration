@@ -25,14 +25,14 @@ spring:
       region:
         static: ru-central1
       endpoint: "https://storage.yandexcloud.net"
+    openfeign:
+      client:
+        config:
+          default:
+            connectTimeout: 5000
+            readTimeout: 5000
+            loggerLevel: NONE
 
-feign:
-  client:
-    config:
-      default:
-        connectTimeout: 5000
-        readTimeout: 5000
-        loggerLevel: NONE
 hh:
   api:
     base-url: https://api.hh.ru
