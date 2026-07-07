@@ -71,7 +71,7 @@ class SecurityTest {
     }
 
     @Test
-    void protectedEndpoint_withoutToker_returns401() throws Exception {
+    void protectedEndpoint_withoutToken_returns401() throws Exception {
         mockMvc.perform(get("/api/v1/geo/country"))
                 .andExpect(status().isUnauthorized());
     }
@@ -80,7 +80,7 @@ class SecurityTest {
     void protectedEndpoint_withTokenSignedWithForeignKey_returns401() throws Exception {
         String fakeToken = token(FOREIGN_KEY_PAIR, Instant.now().plusSeconds(300));
 
-        mockMvc.perform(get("/api/va/geo/country")
+        mockMvc.perform(get("/api/v1/geo/country")
                 .header("Authorization", "Bearer " + fakeToken)).andExpect(status().isUnauthorized());
     }
 

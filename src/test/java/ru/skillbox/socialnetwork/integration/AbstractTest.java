@@ -20,7 +20,7 @@ public class AbstractTest {
 
     protected static RedisContainer redisContainer =
             new RedisContainer(DockerImageName.parse("redis:6.2.6"))
-            .withReuse(true);;
+            .withReuse(true);
 
     static {
         redisContainer.start();
@@ -32,7 +32,7 @@ public class AbstractTest {
 //        String redisHost = redisContainer.getRedisHost();
 //        Integer redisPort = redisContainer.getRedisPort();
         registry.add("spring.data.redis.host", redisContainer::getHost);
-        registry.add("spring.data.redis.port", () -> redisContainer.getMappedPort(redisContainer.getRedisPort()));
+        registry.add("spring.data.redis.port", redisContainer::getRedisPort);
     }
 
 }

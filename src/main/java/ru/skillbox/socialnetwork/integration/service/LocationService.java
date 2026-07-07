@@ -25,7 +25,7 @@ public class LocationService {
     private final HhApiClient apiClient;
     private final CityMapper cityMapper;
 
-    @Cacheable(AppCacheProperties.CacheNames.HH_COUNTRIES)
+    @Cacheable(value = AppCacheProperties.CacheNames.HH_COUNTRIES, sync = true)
     public List<CountryDto> getAllCountries() {
         List<CountryDto> countryDtoList = new ArrayList<>();
         List<CountryModel> allCountries = apiClient.getAllCountries();
@@ -45,7 +45,7 @@ public class LocationService {
         return countryDtoList;
     }
 
-    @Cacheable(AppCacheProperties.CacheNames.HH_CITIES)
+    @Cacheable(value = AppCacheProperties.CacheNames.HH_CITIES, sync = true)
     public List<CityDto> getAllCitiesForCountry(Integer countryId) {
         List<CityDto> allCitiesForCountry = new ArrayList<>();
         AreaModel areaModel = apiClient.getCountryArea(countryId);

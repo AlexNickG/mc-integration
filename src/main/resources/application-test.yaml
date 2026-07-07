@@ -1,0 +1,37 @@
+spring:
+  data:
+    redis:
+      client-type: lettuce
+  cloud:
+    aws:
+      s3:
+        bucket: test-bucket
+      credentials:
+        access_key: test-access-key
+        secret_key: test-secret-key
+      region:
+        static: ru-central1
+      endpoint: "http://localhost:65535"
+
+app:
+  security:
+    enabled: false
+  cache:
+    enable: true
+    cacheType: redis
+    cache-names:
+      - hh-countries
+      - hh-cities
+    caches:
+      hh-countries:
+        expiry: 10m
+      hh-cities:
+        expiry: 10m
+
+hh:
+  api:
+    base-url: http://localhost:65535
+
+eureka:
+  client:
+    enabled: false
