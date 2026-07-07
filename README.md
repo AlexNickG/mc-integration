@@ -20,6 +20,7 @@
 - [Running locally](#running-locally)
 - [Observability](#observability)
 - [Project structure](#project-structure)
+- [Testing](#testing)
 - [Roadmap & known limitations](#roadmap--known-limitations)
 - [License](#license)
 
@@ -54,7 +55,7 @@ flowchart LR
 
     MCI -->|cached via Spring Cache| Redis
     MCI -->|Feign client| HH
-    MCI -->|Spring Cloud AWS S3 SDK| S3
+    MCI -->|AWS SDK v2 - S3| S3
     MCI -->|/actuator/prometheus| Prom
 ```
 
@@ -69,17 +70,19 @@ flowchart LR
 
 | Layer | Technology |
 |---|---|
-| Language | Java 17 |
-| Framework | Spring Boot 3, Spring Security 6 |
+| Language | Java 21 |
+| Framework | Spring Boot 4, Spring Security |
 | Service discovery | Spring Cloud Netflix Eureka (client) |
 | Gateway integration | Spring Cloud Gateway (this service is registered behind it) |
 | External HTTP | Spring Cloud OpenFeign |
-| Object storage | Spring Cloud AWS S3 (against Yandex Cloud Object Storage) |
+| Object storage | AWS SDK for Java v2 (S3-compatible API, against Yandex Cloud Object Storage) |
 | Cache | Redis (Lettuce client) |
 | Security | OAuth2 Resource Server, JWT RS256 (asymmetric) |
 | Observability | Spring Boot Actuator, Micrometer, Prometheus |
+| Testing | JUnit 5, Mockito, Testcontainers (Redis) |
+| Code quality | JaCoCo coverage gate (70% branch / 75% line), SonarCloud |
 | Build | Maven |
-| Conveniences | Lombok |
+| Conveniences | Lombok, MapStruct |
 
 ## Key technical decisions
 
@@ -87,7 +90,7 @@ This section explains *why* the code looks the way it does — the kind of conte
 
 ### 1. OAuth2 Resource Server with RS256, not HS256
 
-The platform uses a separate auth service that issues JWTs signed with an RSA private key. `mc-integration` validates tokens using only the matching **public key** (`NimbusJwtDecoder.withPublicKey(...).signatureAlgorithm(RS256)`).
+The platform uses a separate auth service that issues JWTs signed with an RSA private key. `mc-integration` validates tokens using only the matching **public key**, configured declaratively via `spring.security.oauth2.resourceserver.jwt.public-key-location` (Spring Boot auto-configures the RS256 decoder from the PEM file).
 
 This means a compromise of this service does not allow an attacker to forge tokens — only the auth service holds the signing key. In a symmetric-key (HS256) setup, every resource server would hold the secret, multiplying the attack surface.
 
@@ -135,9 +138,9 @@ Feign over `RestTemplate` / `WebClient` gives:
 - Configurable timeouts at one place
 - Easy to add a `CircuitBreaker` decorator (planned — see [Roadmap](#roadmap--known-limitations))
 
-### 7. Yandex Cloud Object Storage via Spring Cloud AWS S3
+### 7. Yandex Cloud Object Storage via AWS SDK v2
 
-Yandex Cloud exposes an S3-compatible API, so the same Spring Cloud AWS S3 SDK works against it by pointing the endpoint at `https://storage.yandexcloud.net`. Switching to AWS S3 or MinIO is a configuration change — no code touches.
+Yandex Cloud exposes an S3-compatible API, so the standard AWS SDK v2 `S3Client` works against it by pointing `endpointOverride` at `https://storage.yandexcloud.net`. Switching to AWS S3 or MinIO is a configuration change — no code touches. Uploaded files get UUID-based names, so original filenames never leak into public URLs.
 
 ### 8. Production-ready observability defaults
 
@@ -167,7 +170,7 @@ All endpoints (except actuator health and Swagger) require a valid JWT in the `A
 
 | Method   | Path | Description |
 |----------|---|---|
-| `POST`   | `/api/v1/storage/storageUserImage` | Upload a user image (multipart/form-data) |
+| `POST`   | `/api/v1/storage/uploadUserImage` | Upload a user image (multipart/form-data, max 5 MB) |
 | `DELETE` | `/api/v1/storage/deleteByLink?linkToDelete=...` | Delete an image by its public link |
 
 ## Configuration
@@ -182,6 +185,9 @@ All sensitive values are read from environment variables. The defaults in `appli
 | `YC_S3_ACCESS_KEY` | Yandex Cloud / AWS S3 access key | *(required)* |
 | `YC_S3_SECRET_KEY` | Yandex Cloud / AWS S3 secret key | *(required)* |
 | `EUREKA_HOST` | Eureka server URL | `http://localhost:8761/eureka/` |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated list of allowed frontend origins | `http://localhost:8088` |
+
+Security can be switched off entirely for local development with `app.security.enabled=false` (the `local` profile does this) — a separate `LocalSecurityConfiguration` then permits all requests, so you can hit the API without a token.
 
 A `.env.example` file is provided in the repository as a template. Copy it to `.env`, fill in the values, and source it before running.
 
@@ -204,11 +210,11 @@ cd mc-integration
 cp .env.example .env
 # edit .env with your values
 
-# 3. Start dependencies (Redis, Eureka)
-docker compose up -d
+# 3. Start dependencies (Redis; Eureka is optional for local runs)
+docker compose -f docker/docker-compose.yml up -d redis
 
-# 4. Run the service
-./mvnw spring-boot:run
+# 4. Run the service (local profile: security disabled, Redis on localhost)
+mvn spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
 The service will be available at <http://localhost:8765>.
@@ -234,45 +240,70 @@ curl -H "Authorization: Bearer $TOKEN" \
 | `/actuator/prometheus` | Prometheus metrics scrape endpoint |
 | `/actuator/info` | Build info |
 
-Metrics include JVM stats (heap, GC, threads), HTTP server timings, Feign client latencies, cache hit/miss ratios, and Redis connection pool stats — all tagged with `application=mc-integration`.
+Metrics include JVM stats (heap, GC, threads) and HTTP server timings — all tagged with `application=mc-integration`.
 
 ## Project structure
 
 ```
 src/main/java/ru/skillbox/socialnetwork/integration/
+├── api/
+│   ├── HhApiClient.java                 # Feign client for HH.ru areas API
+│   └── model/                           # HH.ru response models
 ├── configuration/
+│   ├── OpenApiConfiguration.java        # Swagger / OpenAPI metadata
+│   ├── S3Configuration.java             # AWS SDK v2 S3Client bean (Yandex Cloud endpoint)
+│   ├── cache/
+│   │   ├── AppCacheProperties.java      # app.cache.* configuration properties
+│   │   ├── CacheConfig.java             # RedisCacheManager with per-cache TTLs
+│   │   └── RedisConfig.java             # Lettuce connection factory, RedisTemplate
 │   └── security/
-│       ├── SecurityConfiguration.java   # OAuth2 Resource Server, route authorization
-│       ├── JwtConfig.java               # NimbusJwtDecoder with RSA public key
-│       └── CorsConfig.java              # CORS rules
-├── controller/
+│       ├── SecurityConfiguration.java   # OAuth2 Resource Server, CORS, route authorization
+│       └── LocalSecurityConfiguration.java  # permit-all chain for local development
+├── controller/v1/
 │   ├── LocationController.java          # /api/v1/geo
 │   └── StorageController.java           # /api/v1/storage
-├── service/
-│   ├── LocationService.java             # HH.ru integration, caching
-│   └── StorageService.java              # S3 upload/delete
-├── client/                              # Feign clients
-└── dto/                                 # Request / response DTOs
+├── dto/                                 # Request / response DTOs
+├── exception/
+│   └── GlobalExceptionHandler.java      # @RestControllerAdvice, structured error responses
+├── mapper/
+│   └── CityMapper.java                  # MapStruct mapper (HH.ru area -> CityDto)
+└── service/
+    ├── LocationService.java             # HH.ru integration, caching
+    └── StorageService.java              # S3 upload/delete
 ```
+
+## Testing
+
+```bash
+mvn clean verify   # Docker must be running: integration tests start Redis via Testcontainers
+```
+
+- **Unit tests** — services and controllers with Mockito (S3 client, Feign client mocked).
+- **Integration tests** — real Redis in a Testcontainer: cache hit/miss behaviour, physical storage of entries.
+- **Security tests** — full Spring context with a generated RSA key pair: 401 without/with forged token, 200 with a valid RS256 JWT, public actuator/Swagger endpoints.
+- **Coverage gate** — the build fails below 70% branch / 75% line coverage (JaCoCo `check` goal); reports land in `target/site/jacoco/`.
 
 ## Roadmap & known limitations
 
 This is a learning / portfolio project and I'm transparent about what's not production-grade yet.
 
-### v1.1 (next)
+### Done in v1.1
 
-- [ ] **Validation** — `@Validated` on controllers, `@Min(1)` on `countryId`, `@NotBlank` on `linkToDelete`.
-- [ ] **Global error handling** — `@ControllerAdvice` with structured `ProblemDetail` (RFC 7807) responses instead of generic 500s.
-- [ ] **OpenAPI annotations** — `@Operation`, `@ApiResponse` on every endpoint so Swagger UI is genuinely useful.
-- [ ] **Integration tests** — Testcontainers for Redis; mock JWT issuer for security flow.
+- [x] **Validation** — `@Validated` on controllers, `@Min(1)` on `countryId`, `@NotBlank` on `linkToDelete`.
+- [x] **Global error handling** — `@RestControllerAdvice` with structured error responses and proper status mapping (400 for client errors, 502 for upstream failures).
+- [x] **OpenAPI annotations** — `@Operation`, `@ApiResponse` on endpoints.
+- [x] **Integration tests** — Testcontainers for Redis; generated RSA key pair for the security flow.
 
-### v1.2
+### v1.2 (next)
 
 - [ ] **Resilience4j Circuit Breaker** around the HH.ru Feign client — currently a slow HH.ru would block our threads.
 - [ ] **Retry with backoff** for transient S3 failures.
 - [ ] **Distributed tracing** via Micrometer Tracing + Zipkin / Tempo.
 
 ### Acknowledged design debts
+
+- Cache writes are asynchronous in Spring Boot 4's Redis cache — without mitigation, two concurrent identical requests could both hit the HH.ru API before the entry becomes visible. Mitigated with `@Cacheable(sync = true)`: the first caller computes and stores the value synchronously while concurrent callers wait for it (also prevents cache stampede).
+- Image replacement is delete + upload on the client side; an atomic replace endpoint would be cleaner.
 
 ## License
 
